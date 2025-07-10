@@ -25,9 +25,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create the status item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem?.button {
-            let appIcon = NSApplication.shared.applicationIconImage
-            appIcon?.isTemplate = true // This makes it work with dark/light mode
-            button.image = appIcon
+            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+            button.image = NSImage(systemSymbolName: "bird", accessibilityDescription: "Nest")?.withSymbolConfiguration(config)
+            button.image?.isTemplate = true // This makes it work with dark/light mode
             button.action = #selector(togglePopover)
         }
         

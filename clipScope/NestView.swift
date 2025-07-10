@@ -58,7 +58,7 @@ struct NestView: View {
     private func handleCombineButtonTap() {
         if isMultiSelectMode && !multiSelection.isEmpty {
             combineSelectedTextItems()
-        } else {
+                } else {
             isMultiSelectMode.toggle()
             if !isMultiSelectMode { multiSelection.removeAll() }
         }
@@ -78,46 +78,46 @@ struct NestView: View {
                 Text(isMultiSelectMode ? "Finish" : "Combine")
             }
             .foregroundColor(isMultiSelectMode ? .accentColor : .primary)
-        }
-        .padding()
+            }
+            .padding()
         .background(Color.black.opacity(0.2))
     }
-    
+
     private var searchAndFilterView: some View {
-        HStack {
-            TextField("Search...", text: $searchText)
-                .textFieldStyle(.plain)
-                .padding(8)
-                .background(Color(.textBackgroundColor).opacity(0.5))
-                .cornerRadius(8)
-            
-            Picker("Filter", selection: $filter) {
-                ForEach(FilterType.allCases, id: \.self) { f in
-                    Text(f.rawValue).tag(f)
+            HStack {
+                TextField("Search...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .padding(8)
+                    .background(Color(.textBackgroundColor).opacity(0.5))
+                    .cornerRadius(8)
+                
+                Picker("Filter", selection: $filter) {
+                    ForEach(FilterType.allCases, id: \.self) { f in
+                        Text(f.rawValue).tag(f)
+                    }
                 }
+                .pickerStyle(.segmented)
+                
+                Picker("View Mode", selection: $viewMode) {
+                    Image(systemName: "list.bullet").tag(ViewMode.list)
+                    Image(systemName: "square.grid.2x2").tag(ViewMode.grid)
+                }
+                .pickerStyle(.segmented)
             }
-            .pickerStyle(.segmented)
-            
-            Picker("View Mode", selection: $viewMode) {
-                Image(systemName: "list.bullet").tag(ViewMode.list)
-                Image(systemName: "square.grid.2x2").tag(ViewMode.grid)
-            }
-            .pickerStyle(.segmented)
-        }
-        .padding(.horizontal)
-        .padding(.bottom, 8)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         .background(Color.black.opacity(0.2))
     }
     
     private var footerView: some View {
-        VStack {
-            Divider()
-            HStack {
-                Stepper("Expire items after: \(expireInterval) day(s)", value: $expireInterval, in: 1...30)
-                Spacer()
+            VStack {
+                Divider()
+                HStack {
+                    Stepper("Expire items after: \(expireInterval) day(s)", value: $expireInterval, in: 1...30)
+                    Spacer()
+                }
+                .padding()
             }
-            .padding()
-        }
         .background(Color.black.opacity(0.2))
     }
     
@@ -295,7 +295,7 @@ struct NestView: View {
         let combined = clipStorage.items
             .filter { multiSelection.contains($0.id) }
             .compactMap { item in
-                Data(base64Encoded: item.base64Data).flatMap { String(data: $0, encoding: .utf8) }
+            Data(base64Encoded: item.base64Data).flatMap { String(data: $0, encoding: .utf8) }
             }
             .joined(separator: "\n")
         
@@ -347,7 +347,7 @@ struct GridItemView: View {
     var onDelete: (() -> Void)?
     var onCopy: (() -> Void)?
     @State private var showingMenu = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Content Preview
@@ -542,8 +542,8 @@ struct ListItemView: View {
                         .foregroundColor(.secondary)
                         .frame(width: 40, height: 40)
                 }
-            }
-            
+                }
+                
             VStack(alignment: .leading, spacing: 4) {
                 if item.type.contains("text"),
                    let decoded = Data(base64Encoded: item.base64Data),

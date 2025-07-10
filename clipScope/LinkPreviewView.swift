@@ -3,18 +3,30 @@ import SwiftUI
 struct LinkPreviewView: View {
     let url: URL
     @State private var preview: LinkPreview?
+    @State private var isLoading = false
+    @State private var loadingError = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let preview = preview {
                 VStack(alignment: .leading, spacing: 8) {
-                    if let imageUrl = preview.imageUrl,
-                       let nsImage = NSImage(contentsOf: imageUrl) {
-                        Image(nsImage: nsImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 120)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    if let imageUrl = preview.imageUrl {
+                        AsyncImage(url: imageUrl) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 120)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            case .failure(_):
+                                EmptyView()
+                            case .empty:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
                     }
                     
                     Text(preview.title)
@@ -38,13 +50,22 @@ struct LinkPreviewView: View {
                     LinkHelper.shared.openLink(url)
                 }
             } else {
-                Text(url.absoluteString)
-                    .font(.body)
-                    .foregroundColor(.accentColor)
-                    .lineLimit(1)
-                    .onTapGesture {
-                        LinkHelper.shared.openLink(url)
+                HStack {
+                    Text(url.absoluteString)
+                        .font(.body)
+                        .foregroundColor(.accentColor)
+                        .lineLimit(1)
+                    
+                    if isLoading {
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(0.5)
+                            .frame(width: 16, height: 16)
                     }
+                }
+                .onTapGesture {
+                    LinkHelper.shared.openLink(url)
+                }
             }
         }
         .onAppear {
@@ -53,8 +74,16 @@ struct LinkPreviewView: View {
     }
     
     private func loadPreview() {
+        isLoading = true
+        loadingError = false
+        
         LinkHelper.shared.fetchLinkPreview(for: url) { fetchedPreview in
-            preview = fetchedPreview
+            isLoading = false
+            if let fetchedPreview = fetchedPreview {
+                preview = fetchedPreview
+            } else {
+                loadingError = true
+            }
         }
     }
 }

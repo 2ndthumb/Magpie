@@ -4,6 +4,16 @@ import AppKit
 class TextEditorWindowController: NSWindowController, NSWindowDelegate {
     private var onSave: () -> Void
     
+    override init(window: NSWindow?) {
+        self.onSave = {}  // Default empty closure
+        super.init(window: window)
+    }
+    
+    required init?(coder: NSCoder) {
+        self.onSave = {}  // Default empty closure
+        super.init(coder: coder)
+    }
+    
     convenience init(text: Binding<String>, onSave: @escaping () -> Void) {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
@@ -70,4 +80,11 @@ extension View {
             appDelegate.textEditorControllers.append(windowController)
         }
     }
+}
+
+#Preview {
+    TextEditorView(
+        text: .constant("Sample text for preview"),
+        onSave: {}
+    )
 } 
