@@ -66,6 +66,11 @@ struct NestView: View {
     
     private var toolbarView: some View {
         HStack {
+            Image(.magpie)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 24)
+                .foregroundStyle(.quaternary)
             Text("Nest").font(.largeTitle).bold()
             Spacer()
             Button(action: handleCombineButtonTap) {
@@ -148,12 +153,17 @@ struct NestView: View {
     @ViewBuilder
     private var contentBody: some View {
         if displayItems.isEmpty {
-            VStack {
+            VStack(spacing: 16) {
                 Spacer()
-                Text("No Clipboard Items")
+                Image(.magpie)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 64, height: 64)
+                    .foregroundStyle(.quaternary)
+                Text("Empty Nest")
                     .font(.title)
                     .foregroundColor(.secondary)
-                Text("Your clipboard history will appear here.")
+                Text("Go collect some treasures!")
                     .foregroundColor(.secondary)
                 Spacer()
             }

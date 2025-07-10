@@ -23,7 +23,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create the status item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "bird.fill", accessibilityDescription: "Nest")
+            let magpieImage = NSImage(named: "magpie")
+            magpieImage?.isTemplate = true // This makes it work with dark/light mode
+            button.image = magpieImage
             button.action = #selector(togglePopover)
         }
         
