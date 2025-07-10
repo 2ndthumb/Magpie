@@ -1,11 +1,12 @@
 import SwiftUI
 import Combine
 import AVKit
+import AppKit
 
 struct NestView: View {
     @StateObject private var clipStorage = ClipStorage.shared
     @State private var selectedItemID: UUID?
-    @State private var multiSelection = Set<UUID>()
+    @State private var multiSelection: [UUID] = []
     @State private var isMultiSelectMode = false
     @State private var normalModeSelectedID: UUID?
     @State private var expireInterval: Int = 1
@@ -14,6 +15,7 @@ struct NestView: View {
     @State private var viewMode: ViewMode = .grid  // Default to grid
     @State private var isEditing = false
     @State private var timerTick: Date = Date()
+    @State private var previewingItem: ClipItem? = nil
     
     enum ViewMode { case list, grid }
     enum FilterType: String, CaseIterable {
@@ -23,108 +25,129 @@ struct NestView: View {
         case files = "Files"
     }
     
-    private var filteredItems: [ClipItem] {
-        let searched = clipStorage.items.filter {
-            searchText.isEmpty ? true : $0.matches(searchText)
-        }
-        
-        switch filter {
+    private var selectedTextItems: [ClipItem] {
+        clipStorage.items.filter { multiSelection.contains($0.id) && $0.type.contains("text") }
+    }
+
+    private func filterBySearch(_ items: [ClipItem]) -> [ClipItem] {
+        searchText.isEmpty ? items : items.filter { $0.matches(searchText) }
+    }
+    
+    private func filterByType(_ items: [ClipItem], type: FilterType) -> [ClipItem] {
+        switch type {
         case .all:
-            return searched
+            return items
         case .text:
-            return searched.filter { $0.type.contains("text") }
+            return items.filter { $0.type.contains("text") }
         case .images:
-            return searched.filter { $0.type.contains("public.image") }
+            return items.filter { $0.type.contains("public.image") }
         case .files:
-            return searched.filter { 
-                !$0.type.contains("text") && 
-                !$0.type.contains("public.image") && 
+            return items.filter {
+                !$0.type.contains("text") &&
+                !$0.type.contains("public.image") &&
                 ($0.fileType != .unknown && $0.fileType != .none)
             }
         }
     }
+
+    private var displayItems: [ClipItem] {
+        let searchFiltered = filterBySearch(clipStorage.items)
+        return filterByType(searchFiltered, type: filter)
+    }
     
-    private var selectedTextItems: [ClipItem] {
-        clipStorage.items.filter { multiSelection.contains($0.id) && $0.type.contains("text") }
+    private func handleCombineButtonTap() {
+        if isMultiSelectMode && !multiSelection.isEmpty {
+            combineSelectedTextItems()
+        } else {
+            isMultiSelectMode.toggle()
+            if !isMultiSelectMode { multiSelection.removeAll() }
+        }
+    }
+    
+    private var toolbarView: some View {
+        HStack {
+            Text("Nest").font(.largeTitle).bold()
+            Spacer()
+            Button(action: handleCombineButtonTap) {
+                Image(systemName: isMultiSelectMode ? "checkmark.circle.fill" : "text.badge.plus")
+                Text(isMultiSelectMode ? "Finish" : "Combine")
+            }
+            .foregroundColor(isMultiSelectMode ? .accentColor : .primary)
+        }
+        .padding()
+        .background(Color.black.opacity(0.2))
+    }
+    
+    private var searchAndFilterView: some View {
+        HStack {
+            TextField("Search...", text: $searchText)
+                .textFieldStyle(.plain)
+                .padding(8)
+                .background(Color(.textBackgroundColor).opacity(0.5))
+                .cornerRadius(8)
+            
+            Picker("Filter", selection: $filter) {
+                ForEach(FilterType.allCases, id: \.self) { f in
+                    Text(f.rawValue).tag(f)
+                }
+            }
+            .pickerStyle(.segmented)
+            
+            Picker("View Mode", selection: $viewMode) {
+                Image(systemName: "list.bullet").tag(ViewMode.list)
+                Image(systemName: "square.grid.2x2").tag(ViewMode.grid)
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 8)
+        .background(Color.black.opacity(0.2))
+    }
+    
+    private var footerView: some View {
+        VStack {
+            Divider()
+            HStack {
+                Stepper("Expire items after: \(expireInterval) day(s)", value: $expireInterval, in: 1...30)
+                Spacer()
+            }
+            .padding()
+        }
+        .background(Color.black.opacity(0.2))
     }
     
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: - Toolbar
-            HStack {
-                Text("Nest").font(.largeTitle).bold()
-                Spacer()
-                    Button(action: {
-                    if isMultiSelectMode && !multiSelection.isEmpty {
-                        combineSelectedTextItems()
-                } else {
-                        isMultiSelectMode.toggle()
-                        if !isMultiSelectMode { multiSelection.removeAll() }
-                    }
-                }) {
-                    Image(systemName: isMultiSelectMode ? "checkmark.circle.fill" : "text.badge.plus")
-                    Text(isMultiSelectMode ? "Finish" : "Combine")
-                }
-                .foregroundColor(isMultiSelectMode ? .accentColor : .primary)
-            }
-            .padding()
-            .background(Color.black.opacity(0.2))
-
-            // MARK: - Search and Filter Bar
-            HStack {
-                TextField("Search...", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .padding(8)
-                    .background(Color(.textBackgroundColor).opacity(0.5))
-                    .cornerRadius(8)
-                
-                Picker("Filter", selection: $filter) {
-                    ForEach(FilterType.allCases, id: \.self) { f in
-                        Text(f.rawValue).tag(f)
-                    }
-                }
-                .pickerStyle(.segmented)
-                
-                Picker("View Mode", selection: $viewMode) {
-                    Image(systemName: "list.bullet").tag(ViewMode.list)
-                    Image(systemName: "square.grid.2x2").tag(ViewMode.grid)
-                }
-                .pickerStyle(.segmented)
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
-            .background(Color.black.opacity(0.2))
-            
+            toolbarView
+            searchAndFilterView
             Divider().opacity(0)
-
-            // MARK: - Content Area
             contentBody
-            
-            // MARK: - Footer / Settings
-            VStack {
-                Divider()
-                HStack {
-                    Stepper("Expire items after: \(expireInterval) day(s)", value: $expireInterval, in: 1...30)
-                    Spacer()
-                }
-                .padding()
-            }
-            .background(Color.black.opacity(0.2))
+            footerView
         }
         .frame(minWidth: 400, minHeight: 600)
         .background(VisualEffectView(material: .sidebar, blendingMode: .behindWindow))
         .onAppear(perform: setupView)
-        .onChange(of: expireInterval) {
-            clipStorage.expireInterval = TimeInterval($1 * 60 * 60 * 24)
+        .onChange(of: expireInterval) { oldValue, newValue in
+            clipStorage.expireInterval = TimeInterval(newValue * 60 * 60 * 24)
         }
         .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { now in
             timerTick = now
+        }
+        .sheet(item: $previewingItem) { item in
+            if item.type.contains("text"), let decoded = Data(base64Encoded: item.base64Data), let string = String(data: decoded, encoding: .utf8) {
+                MinimalTextEditorView(text: string)
+            } else if item.type.contains("image"), let decoded = Data(base64Encoded: item.base64Data), let nsImage = NSImage(data: decoded) {
+                MinimalImagePreviewView(image: nsImage)
+            } else {
+                Text("Cannot preview this item.")
+                    .frame(width: 300, height: 200)
+            }
         }
     }
     
     @ViewBuilder
     private var contentBody: some View {
-        if filteredItems.isEmpty {
+        if displayItems.isEmpty {
             VStack {
                 Spacer()
                 Text("No Clipboard Items")
@@ -140,14 +163,14 @@ struct NestView: View {
                     LazyVGrid(columns: [
                         GridItem(.adaptive(minimum: 150, maximum: 200), spacing: 12)
                     ], spacing: 12) {
-                        ForEach(filteredItems) { item in
+                        ForEach(displayItems) { item in
                             gridItemView(for: item)
                         }
                     }
                     .padding()
                 } else {
                     LazyVStack(spacing: 1) {
-                        ForEach(filteredItems) { item in
+                        ForEach(displayItems) { item in
                             listItemView(for: item)
                         }
                     }
@@ -155,6 +178,52 @@ struct NestView: View {
             }
             .background(Color.black.opacity(0.2))
         }
+    }
+
+    private func handleItemSelection(itemId: UUID) {
+        if isMultiSelectMode {
+            if let idx = multiSelection.firstIndex(of: itemId) {
+                multiSelection.remove(at: idx)
+            } else {
+                multiSelection.append(itemId)
+            }
+        } else {
+            if normalModeSelectedID == itemId {
+                normalModeSelectedID = nil
+            } else {
+                normalModeSelectedID = itemId
+            }
+        }
+    }
+    
+    private func handleItemCombine(itemId: UUID) {
+        if multiSelection.contains(itemId) {
+            if let idx = multiSelection.firstIndex(of: itemId) {
+                multiSelection.remove(at: idx)
+            }
+        } else {
+            multiSelection.append(itemId)
+            // Automatically enter combine mode when adding an item
+            if !isMultiSelectMode {
+                isMultiSelectMode = true
+            }
+        }
+    }
+    
+    private func handleItemDelete(item: ClipItem) {
+        if let idx = multiSelection.firstIndex(of: item.id) {
+            multiSelection.remove(at: idx)
+        }
+        normalModeSelectedID = nil
+        clipStorage.delete(item: item)
+    }
+
+    private func copyItem(_ item: ClipItem) {
+        ClipboardWatcher.shared.willCopyFromHistory()
+        
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(String(data: Data(base64Encoded: item.base64Data)!, encoding: .utf8)!, forType: .string)
     }
 
     private func gridItemView(for item: ClipItem) -> some View {
@@ -165,38 +234,14 @@ struct NestView: View {
             isSelected: isSelected,
             isCombineSelected: multiSelection.contains(item.id),
             combineMode: isMultiSelectMode,
-            onTap: {
-                if isMultiSelectMode {
-                    if multiSelection.contains(item.id) {
-                        multiSelection.remove(item.id)
-                    } else {
-                        multiSelection.insert(item.id)
-                    }
-                } else {
-                    if normalModeSelectedID == item.id {
-                        normalModeSelectedID = nil
-                    } else {
-                        normalModeSelectedID = item.id
-                    }
-                }
-            },
-            onCombine: isText ? {
-                if multiSelection.contains(item.id) {
-                    multiSelection.remove(item.id)
-                } else {
-                    multiSelection.insert(item.id)
-                    // Automatically enter combine mode when adding an item
-                    if !isMultiSelectMode {
-                        isMultiSelectMode = true
-                    }
-                }
-            } : nil,
-            onDelete: {
-                multiSelection.remove(item.id)
-                normalModeSelectedID = nil
-                clipStorage.delete(item: item)
-            }
+            onTap: { handleItemSelection(itemId: item.id) },
+            onCombine: isText ? { handleItemCombine(itemId: item.id) } : nil,
+            onDelete: { handleItemDelete(item: item) },
+            onCopy: { copyItem(item) }
         )
+        .onTapGesture(count: 2) {
+            previewingItem = item
+        }
     }
 
     private func listItemView(for item: ClipItem) -> some View {
@@ -207,38 +252,13 @@ struct NestView: View {
             isSelected: isSelected,
             isCombineSelected: multiSelection.contains(item.id),
             combineMode: isMultiSelectMode,
-            onTap: {
-                if isMultiSelectMode {
-                    if multiSelection.contains(item.id) {
-                        multiSelection.remove(item.id)
-                    } else {
-                        multiSelection.insert(item.id)
-                    }
-                } else {
-                    if normalModeSelectedID == item.id {
-                        normalModeSelectedID = nil
-                    } else {
-                        normalModeSelectedID = item.id
-                    }
-                }
-            },
-            onCombine: isText ? {
-                if multiSelection.contains(item.id) {
-                    multiSelection.remove(item.id)
-                } else {
-                    multiSelection.insert(item.id)
-                    // Automatically enter combine mode when adding an item
-                    if !isMultiSelectMode {
-                        isMultiSelectMode = true
-                    }
-                }
-            } : nil,
-            onDelete: {
-                multiSelection.remove(item.id)
-                normalModeSelectedID = nil
-                clipStorage.delete(item: item)
-            }
+            onTap: { handleItemSelection(itemId: item.id) },
+            onCombine: isText ? { handleItemCombine(itemId: item.id) } : nil,
+            onDelete: { handleItemDelete(item: item) }
         )
+        .onTapGesture(count: 2) {
+            previewingItem = item
+        }
     }
     
     private func setupView() {
@@ -264,12 +284,10 @@ struct NestView: View {
     }
     
     private func combineSelectedTextItems() {
-        let combined = clipStorage.items
-            .filter { multiSelection.contains($0.id) && $0.type.contains("text") }
-            .compactMap { item in
-                Data(base64Encoded: item.base64Data).flatMap { String(data: $0, encoding: .utf8) }
-            }
-            .joined(separator: "\n")
+        let combined = multiSelection.compactMap { id in
+            clipStorage.items.first(where: { $0.id == id && $0.type.contains("text") })
+                .flatMap { Data(base64Encoded: $0.base64Data).flatMap { String(data: $0, encoding: .utf8) } }
+        }.joined(separator: "\n")
         
         ClipboardWatcher.shared.willCopyFromCombineOperation()
         
@@ -283,10 +301,10 @@ struct NestView: View {
     
     private func handleItemTap(_ item: ClipItem) {
         if isMultiSelectMode {
-            if multiSelection.contains(item.id) {
-                multiSelection.remove(item.id)
+            if let idx = multiSelection.firstIndex(of: item.id) {
+                multiSelection.remove(at: idx)
             } else {
-                multiSelection.insert(item.id)
+                multiSelection.append(item.id)
             }
         } else {
             selectedItemID = item.id
@@ -300,8 +318,10 @@ struct GridItemView: View {
     var isCombineSelected: Bool = false
     var combineMode: Bool = false
     var onTap: () -> Void = {}
+    var onDoubleTap: (() -> Void)?
     var onCombine: (() -> Void)?
     var onDelete: (() -> Void)?
+    var onCopy: (() -> Void)?
     @State private var showingMenu = false
     
     var body: some View {
@@ -386,7 +406,7 @@ struct GridItemView: View {
     private var menuContent: some View {
         VStack(spacing: 0) {
             Button(action: {
-                copyItem(item)
+                onCopy?()
                 showingMenu = false
             }) {
                 Label("Copy", systemImage: "doc.on.doc")
@@ -419,14 +439,6 @@ struct GridItemView: View {
         .frame(width: 150)
         .cornerRadius(8)
         .padding(4)
-    }
-    
-    private func copyItem(_ item: ClipItem) {
-        ClipboardWatcher.shared.willCopyFromHistory()
-        
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(String(data: Data(base64Encoded: item.base64Data)!, encoding: .utf8)!, forType: .string)
     }
     
     private func relativeTimeString(from date: Date) -> String {
@@ -579,5 +591,38 @@ extension ClipItem {
             return true
         }
         return false
+    }
+}
+
+struct MinimalTextEditorView: View {
+    @State var text: String
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("Text Preview")
+                .font(.headline)
+                .padding(.top, 8)
+            Divider()
+            TextEditor(text: $text)
+                .font(.system(size: 14, design: .monospaced))
+                .padding()
+        }
+        .frame(width: 400, height: 300)
+    }
+}
+
+struct MinimalImagePreviewView: View {
+    let image: NSImage
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("Image Preview")
+                .font(.headline)
+                .padding(.top, 8)
+            Divider()
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFit()
+                .padding()
+        }
+        .frame(width: 400, height: 300)
     }
 }
