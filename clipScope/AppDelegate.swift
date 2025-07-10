@@ -23,9 +23,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create the status item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem?.button {
-            let magpieImage = NSImage(named: "magpie")
-            magpieImage?.isTemplate = true // This makes it work with dark/light mode
-            button.image = magpieImage
+            let appIcon = NSApplication.shared.applicationIconImage
+            appIcon?.isTemplate = true // This makes it work with dark/light mode
+            button.image = appIcon
             button.action = #selector(togglePopover)
         }
         
@@ -110,7 +110,7 @@ struct QuickMenuView: View {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
-                TextField("Search clipboard...", text: $searchText)
+                TextField("Search nest...", text: $searchText)
                     .textFieldStyle(.plain)
             }
             .padding(10)
