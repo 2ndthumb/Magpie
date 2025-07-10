@@ -3,14 +3,10 @@ import SwiftUI
 struct LinkPreviewView: View {
     let url: URL
     @State private var preview: LinkPreview?
-    @State private var isLoading = true
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, minHeight: 100)
-            } else if let preview = preview {
+            if let preview = preview {
                 VStack(alignment: .leading, spacing: 8) {
                     if let imageUrl = preview.imageUrl,
                        let nsImage = NSImage(contentsOf: imageUrl) {
@@ -57,10 +53,8 @@ struct LinkPreviewView: View {
     }
     
     private func loadPreview() {
-        isLoading = true
         LinkHelper.shared.fetchLinkPreview(for: url) { fetchedPreview in
             preview = fetchedPreview
-            isLoading = false
         }
     }
 }

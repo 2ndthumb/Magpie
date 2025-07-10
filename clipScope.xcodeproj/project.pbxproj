@@ -24,7 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		3ADC10BB2E201FA200A90A7C /* clipScope.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = clipScope.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3ADC10BB2E201FA200A90A7C /* Magpie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Magpie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3ADC10CA2E201FA500A90A7C /* clipScopeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = clipScopeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3ADC10D42E201FA500A90A7C /* clipScopeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = clipScopeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -114,7 +114,7 @@
 			packageProductDependencies = (
 			);
 			productName = clipScope;
-			productReference = 3ADC10BB2E201FA200A90A7C /* clipScope.app */;
+			productReference = 3ADC10BB2E201FA200A90A7C /* Magpie.app */;
 			productType = "com.apple.product-type.application";
 		};
 		3ADC10C92E201FA500A90A7C /* clipScopeTests */ = {
@@ -412,7 +412,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = samroman.clipScope;
+				PRODUCT_BUNDLE_IDENTIFIER = samroman.magpie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -446,7 +446,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = samroman.clipScope;
+				PRODUCT_BUNDLE_IDENTIFIER = samroman.magpie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
