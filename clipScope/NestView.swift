@@ -233,7 +233,21 @@ struct NestView: View {
         
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(String(data: Data(base64Encoded: item.base64Data)!, encoding: .utf8)!, forType: .string)
+        
+        if item.type.contains("image"),
+           let imageData = Data(base64Encoded: item.base64Data),
+           let image = NSImage(data: imageData) {
+            pasteboard.writeObjects([image])
+        } else if item.type.contains("text"),
+                  let data = Data(base64Encoded: item.base64Data),
+                  let string = String(data: data, encoding: .utf8) {
+            pasteboard.setString(string, forType: .string)
+        } else {
+            // For other types, try to set the raw data with the original type
+            if let data = Data(base64Encoded: item.base64Data) {
+                pasteboard.setData(data, forType: NSPasteboard.PasteboardType(item.type))
+            }
+        }
     }
 
     private func gridItemView(for item: ClipItem) -> some View {
