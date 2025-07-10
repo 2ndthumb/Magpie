@@ -6,6 +6,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
     var window: NSWindow?
+    var imagePreviewControllers: [ImagePreviewWindowController] = []
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Hide the window on launch
