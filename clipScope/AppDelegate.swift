@@ -135,14 +135,13 @@ struct QuickMenuView: View {
                 Spacer()
                 
                 Button(action: { combineMode.toggle(); if !combineMode { selectedItems.removeAll() } }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: combineMode ? "checkmark.circle.fill" : "text.badge.plus")
-                        Text(combineMode ? "Finish" : "Combine")
-                    }
-                    .font(.system(size: 13))
+                    Image(systemName: combineMode ? "checkmark.circle.fill" : "text.badge.plus")
+                        .font(.system(size: 13))
+                        .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, 8)
+                .background(Color.clear)
+                .cornerRadius(6)
                 .foregroundColor(combineMode ? .accentColor : .primary)
                 
                 Button(action: { viewMode = viewMode == .list ? .grid : .list }) {
