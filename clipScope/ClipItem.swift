@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 
 struct ClipItem: Identifiable, Codable {
     let id: UUID
@@ -57,6 +58,10 @@ struct ClipItem: Identifiable, Codable {
         }
         if let text = decodedText,
            text.localizedCaseInsensitiveContains(searchText) {
+            return true
+        }
+        if let url = detectedURL,
+           url.absoluteString.localizedCaseInsensitiveContains(searchText) {
             return true
         }
         return false
