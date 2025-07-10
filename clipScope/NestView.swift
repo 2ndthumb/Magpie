@@ -431,7 +431,7 @@ struct GridItemView: View {
     private var menuContent: some View {
         VStack(spacing: 0) {
             Button(action: {
-                copyItem(item)
+                onCopy?()
                 showingMenu = false
             }) {
                 Label("Copy", systemImage: "doc.on.doc")

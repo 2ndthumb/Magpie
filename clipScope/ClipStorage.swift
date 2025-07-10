@@ -24,7 +24,7 @@ class ClipStorage: ObservableObject {
     
     func save(type: String, data: Data, applicationName: String, windowName: String) {
         let base64String = data.base64EncodedString()
-        let newItem = ClipItem(id: UUID(), timestamp: Date(), type: type, base64Data: base64String, applicationName: applicationName, windowName: windowName)
+        let newItem = ClipItem(id: UUID(), type: type, base64Data: base64String, timestamp: Date(), applicationName: applicationName, windowName: windowName)
         
         DispatchQueue.main.async {
             self.items.insert(newItem, at: 0)
