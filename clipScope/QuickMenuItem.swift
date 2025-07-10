@@ -79,7 +79,9 @@ struct QuickMenuItem: View {
             }) {
                 Label("Copy", systemImage: "doc.on.doc")
             }
-            .buttonStyle(MenuButtonStyle())
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             
             if let url = item.detectedURL {
                 Divider()
@@ -89,7 +91,9 @@ struct QuickMenuItem: View {
                 }) {
                     Label("Open in Browser", systemImage: "safari")
                 }
-                .buttonStyle(MenuButtonStyle())
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
                 
                 Button(action: {
                     NSPasteboard.general.clearContents()
@@ -98,7 +102,45 @@ struct QuickMenuItem: View {
                 }) {
                     Label("Copy URL", systemImage: "link")
                 }
-                .buttonStyle(MenuButtonStyle())
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            }
+            
+            if item.type.contains("text"), let text = item.decodedText {
+                Divider()
+                Button(action: {
+                    var editableText = text
+                    openInTextEditor(text: .init(
+                        get: { editableText },
+                        set: { editableText = $0 }
+                    )) {
+                        // On save, create a new clipboard item
+                        ClipboardWatcher.shared.willCopyFromCombineOperation()
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(editableText, forType: .string)
+                    }
+                    showMenu = false
+                }) {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            }
+            
+            if item.type.contains("image"), let image = item.decodedImage {
+                Divider()
+                Button(action: {
+                    openInImagePreview(image: image)
+                    showMenu = false
+                }) {
+                    Label("Preview", systemImage: "eye")
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
             }
             
             if let onCombine = onCombine {
@@ -109,22 +151,23 @@ struct QuickMenuItem: View {
                 }) {
                     Label(isCombineSelected ? "Remove from Combine" : "Add to Combine", systemImage: isCombineSelected ? "minus.circle" : "plus.circle")
                 }
-                .buttonStyle(MenuButtonStyle())
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
             }
             
             Divider()
-            Button(action: {
+            Button(role: .destructive, action: {
                 onDelete()
                 showMenu = false
             }) {
                 Label("Delete", systemImage: "trash")
-                    .foregroundColor(.red)
             }
-            .buttonStyle(MenuButtonStyle())
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
         }
-        .frame(width: 150)
-        .cornerRadius(8)
-        .padding(4)
+        .frame(minWidth: 150)
     }
     
     private var itemDisplayText: String {

@@ -450,54 +450,58 @@ struct GridItemView: View {
             }) {
                 Label("Copy", systemImage: "doc.on.doc")
             }
-            .buttonStyle(MenuButtonStyle())
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             
-            if let url = item.detectedURL {
+            if item.type.contains("text"), let text = item.decodedText {
                 Divider()
                 Button(action: {
-                    LinkHelper.shared.openLink(url)
+                    var editableText = text
+                    openInTextEditor(text: .init(
+                        get: { editableText },
+                        set: { editableText = $0 }
+                    )) {
+                        // On save, create a new clipboard item
+                        ClipboardWatcher.shared.willCopyFromCombineOperation()
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(editableText, forType: .string)
+                    }
                     showingMenu = false
                 }) {
-                    Label("Open in Browser", systemImage: "safari")
+                    Label("Edit", systemImage: "pencil")
                 }
-                .buttonStyle(MenuButtonStyle())
-                
-                Button(action: {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(url.absoluteString, forType: .string)
-                    showingMenu = false
-                }) {
-                    Label("Copy URL", systemImage: "link")
-                }
-                .buttonStyle(MenuButtonStyle())
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
             }
             
-            if onCombine != nil {
+            if item.type.contains("image"), let image = item.decodedImage {
                 Divider()
                 Button(action: {
-                    onCombine?()
+                    openInImagePreview(image: image)
                     showingMenu = false
                 }) {
-                    Label(isCombineSelected ? "Remove from Combine" : "Add to Combine", systemImage: isCombineSelected ? "minus.circle" : "plus.circle")
+                    Label("Preview", systemImage: "eye")
                 }
-                .buttonStyle(MenuButtonStyle())
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
             }
             
-            if onDelete != nil {
-                Divider()
-                Button(action: {
-                    onDelete?()
-                    showingMenu = false
-                }) {
-                    Label("Delete", systemImage: "trash")
-                        .foregroundColor(.red)
-                }
-                .buttonStyle(MenuButtonStyle())
+            Divider()
+            Button(role: .destructive, action: {
+                onDelete?()
+                showingMenu = false
+            }) {
+                Label("Delete", systemImage: "trash")
             }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
         }
-        .frame(width: 150)
-        .cornerRadius(8)
-        .padding(4)
+        .frame(minWidth: 150)
     }
     
     private func relativeTimeString(from date: Date) -> String {
