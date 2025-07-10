@@ -34,7 +34,7 @@ struct LinkPreviewView: View {
                     
                     Text(preview.url.host ?? preview.url.absoluteString)
                         .font(.caption)
-                        .foregroundColor(.tertiary)
+                        .foregroundColor(.secondary.opacity(0.7))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())

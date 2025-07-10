@@ -625,18 +625,6 @@ extension ClipItem {
     var sourceAppName: String {
         applicationName.isEmpty ? "Unknown App" : applicationName
     }
-    
-    func matches(_ searchText: String) -> Bool {
-        if sourceAppName.localizedCaseInsensitiveContains(searchText) {
-            return true
-        }
-        if let decoded = Data(base64Encoded: base64Data),
-           let string = String(data: decoded, encoding: .utf8),
-           string.localizedCaseInsensitiveContains(searchText) {
-            return true
-        }
-        return false
-    }
 }
 
 struct MinimalTextEditorView: View {
