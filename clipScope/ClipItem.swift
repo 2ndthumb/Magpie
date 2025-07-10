@@ -2,28 +2,63 @@ import Foundation
 
 struct ClipItem: Identifiable, Codable {
     let id: UUID
-    let timestamp: Date
     let type: String
-    var base64Data: String
+    let base64Data: String
+    let timestamp: Date
     let applicationName: String
     let windowName: String
-
-    // Add support for additional file types
-    var fileType: FileType {
-        if type.contains("pdf") {
-            return .pdf
-        } else if type.contains("word") {
-            return .word
-        } else if type.contains("audio") {
-            return .audio
-        } else if type.contains("video") {
-            return .video
-        } else {
-            return .none
+    
+    var detectedURL: URL? {
+        if type.contains("text"),
+           let data = Data(base64Encoded: base64Data),
+           let text = String(data: data, encoding: .utf8) {
+            return LinkHelper.shared.extractFirstLink(from: text)
         }
+        return nil
     }
-
-    enum FileType: String {
-        case pdf, word, audio, video, none, unknown
+    
+    var decodedText: String? {
+        if type.contains("text"),
+           let data = Data(base64Encoded: base64Data) {
+            return String(data: data, encoding: .utf8)
+        }
+        return nil
+    }
+    
+    var decodedImage: NSImage? {
+        if type.contains("image"),
+           let data = Data(base64Encoded: base64Data) {
+            return NSImage(data: data)
+        }
+        return nil
+    }
+    
+    enum FileType {
+        case pdf
+        case word
+        case audio
+        case video
+        case unknown
+        case none
+    }
+    
+    var fileType: FileType {
+        if type.contains("pdf") { return .pdf }
+        if type.contains("word") || type.contains("doc") { return .word }
+        if type.contains("audio") { return .audio }
+        if type.contains("video") { return .video }
+        if type.contains("file") { return .unknown }
+        return .none
+    }
+    
+    func matches(_ searchText: String) -> Bool {
+        if applicationName.localizedCaseInsensitiveContains(searchText) {
+            return true
+        }
+        if let text = decodedText,
+           text.localizedCaseInsensitiveContains(searchText) {
+            return true
+        }
+        return false
     }
 }

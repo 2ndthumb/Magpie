@@ -374,22 +374,25 @@ struct GridItemView: View {
     private var contentPreview: some View {
         Group {
             if item.type.contains("image"),
-               let imageData = Data(base64Encoded: item.base64Data),
-               let nsImage = NSImage(data: imageData) {
+               let nsImage = item.decodedImage {
                 Image(nsImage: nsImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 120)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             } else if item.type.contains("text"),
-                      let decoded = Data(base64Encoded: item.base64Data),
-                      let string = String(data: decoded, encoding: .utf8) {
-                Text(string)
-                    .lineLimit(5)
-                    .font(.system(size: 13, design: .default))
-                    .lineSpacing(2)
-                    .padding(12)
-                    .frame(height: 120, alignment: .topLeading)
+                      let text = item.decodedText {
+                if let url = item.detectedURL {
+                    LinkPreviewView(url: url)
+                        .frame(height: 120)
+                } else {
+                    Text(text)
+                        .lineLimit(5)
+                        .font(.system(size: 13, design: .default))
+                        .lineSpacing(2)
+                        .padding(12)
+                        .frame(height: 120, alignment: .topLeading)
+                }
             } else {
                 Image(systemName: item.iconName)
                     .font(.system(size: 40))
@@ -399,6 +402,18 @@ struct GridItemView: View {
         .frame(maxWidth: .infinity)
         .background(Color(.textBackgroundColor).opacity(0.1))
         .cornerRadius(8)
+        .onDrag {
+            if let text = item.decodedText {
+                let provider = NSItemProvider(object: text as NSString)
+                if let url = item.detectedURL {
+                    provider.registerObject(url as NSURL, visibility: .all)
+                }
+                return provider
+            } else if let image = item.decodedImage {
+                return NSItemProvider(object: image)
+            }
+            return NSItemProvider()
+        }
     }
     
     private var metadataView: some View {
@@ -416,12 +431,32 @@ struct GridItemView: View {
     private var menuContent: some View {
         VStack(spacing: 0) {
             Button(action: {
-                onCopy?()
+                copyItem(item)
                 showingMenu = false
             }) {
                 Label("Copy", systemImage: "doc.on.doc")
             }
             .buttonStyle(MenuButtonStyle())
+            
+            if let url = item.detectedURL {
+                Divider()
+                Button(action: {
+                    LinkHelper.shared.openLink(url)
+                    showingMenu = false
+                }) {
+                    Label("Open in Browser", systemImage: "safari")
+                }
+                .buttonStyle(MenuButtonStyle())
+                
+                Button(action: {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(url.absoluteString, forType: .string)
+                    showingMenu = false
+                }) {
+                    Label("Copy URL", systemImage: "link")
+                }
+                .buttonStyle(MenuButtonStyle())
+            }
             
             if onCombine != nil {
                 Divider()

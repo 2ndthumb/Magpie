@@ -52,6 +52,18 @@ struct QuickMenuItem: View {
                     showMenu = true
                 }
             }
+            .onDrag {
+                if let text = item.decodedText {
+                    let provider = NSItemProvider(object: text as NSString)
+                    if let url = item.detectedURL {
+                        provider.registerObject(url as NSURL, visibility: .all)
+                    }
+                    return provider
+                } else if let image = item.decodedImage {
+                    return NSItemProvider(object: image)
+                }
+                return NSItemProvider()
+            }
             .popover(isPresented: $showMenu, arrowEdge: .leading, content: {
                 menuContent
                     .background(VisualEffectView(material: .menu, blendingMode: .behindWindow))
@@ -68,6 +80,26 @@ struct QuickMenuItem: View {
                 Label("Copy", systemImage: "doc.on.doc")
             }
             .buttonStyle(MenuButtonStyle())
+            
+            if let url = item.detectedURL {
+                Divider()
+                Button(action: {
+                    LinkHelper.shared.openLink(url)
+                    showMenu = false
+                }) {
+                    Label("Open in Browser", systemImage: "safari")
+                }
+                .buttonStyle(MenuButtonStyle())
+                
+                Button(action: {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(url.absoluteString, forType: .string)
+                    showMenu = false
+                }) {
+                    Label("Copy URL", systemImage: "link")
+                }
+                .buttonStyle(MenuButtonStyle())
+            }
             
             if let onCombine = onCombine {
                 Divider()
@@ -96,8 +128,10 @@ struct QuickMenuItem: View {
     }
     
     private var itemDisplayText: String {
-        if item.type.contains("text"), let data = Data(base64Encoded: item.base64Data), let str = String(data: data, encoding: .utf8) {
-            return str
+        if let url = item.detectedURL {
+            return url.host ?? url.absoluteString
+        } else if let text = item.decodedText {
+            return text
         } else if item.type.contains("image") {
             return "Image"
         } else if item.type.contains("file") {
@@ -108,12 +142,16 @@ struct QuickMenuItem: View {
     
     private var itemPreview: some View {
         Group {
-            if item.type.contains("image"), let data = Data(base64Encoded: item.base64Data), let nsImage = NSImage(data: data) {
+            if item.type.contains("image"),
+               let nsImage = item.decodedImage {
                 Image(nsImage: nsImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
                     .cornerRadius(4)
+            } else if let url = item.detectedURL {
+                Image(systemName: "link")
+                    .foregroundColor(.accentColor)
             } else if item.type.contains("text") {
                 Image(systemName: "doc.text")
                     .foregroundColor(.accentColor)
