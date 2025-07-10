@@ -21,7 +21,14 @@ class ClipboardHelper {
         if let data = pasteboard.data(forType: .string),
            let base64String = String(data: data, encoding: .utf8),
            let decodedData = Data(base64Encoded: base64String) {
-            return ClipItem(id: UUID(), timestamp: Date(), type: "text", base64Data: base64String, applicationName: "", windowName: "")
+            return ClipItem(
+                id: UUID(),
+                type: "text",
+                base64Data: base64String,
+                timestamp: Date(),
+                applicationName: "",
+                windowName: ""
+            )
         }
         return nil
     }
