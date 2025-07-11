@@ -24,7 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		3ADC10BB2E201FA200A90A7C /* Magpie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Magpie.app; path = Magpie.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3ADC10BB2E201FA200A90A7C /* Magpie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Magpie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3ADC10CA2E201FA500A90A7C /* clipScopeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = clipScopeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3ADC10D42E201FA500A90A7C /* clipScopeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = clipScopeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -95,9 +95,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3ADC10BA2E201FA200A90A7C /* clipScope */ = {
+		3ADC10BA2E201FA200A90A7C /* Magpie */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3ADC10DE2E201FA500A90A7C /* Build configuration list for PBXNativeTarget "clipScope" */;
+			buildConfigurationList = 3ADC10DE2E201FA500A90A7C /* Build configuration list for PBXNativeTarget "Magpie" */;
 			buildPhases = (
 				3ADC10B72E201FA200A90A7C /* Sources */,
 				3ADC10B82E201FA200A90A7C /* Frameworks */,
@@ -110,10 +110,10 @@
 			fileSystemSynchronizedGroups = (
 				3ADC10BD2E201FA200A90A7C /* clipScope */,
 			);
-			name = clipScope;
+			name = Magpie;
 			packageProductDependencies = (
 			);
-			productName = clipScope;
+			productName = Magpie;
 			productReference = 3ADC10BB2E201FA200A90A7C /* Magpie.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -200,7 +200,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3ADC10BA2E201FA200A90A7C /* clipScope */,
+				3ADC10BA2E201FA200A90A7C /* Magpie */,
 				3ADC10C92E201FA500A90A7C /* clipScopeTests */,
 				3ADC10D32E201FA500A90A7C /* clipScopeUITests */,
 			);
@@ -258,12 +258,12 @@
 /* Begin PBXTargetDependency section */
 		3ADC10CC2E201FA500A90A7C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 3ADC10BA2E201FA200A90A7C /* clipScope */;
+			target = 3ADC10BA2E201FA200A90A7C /* Magpie */;
 			targetProxy = 3ADC10CB2E201FA500A90A7C /* PBXContainerItemProxy */;
 		};
 		3ADC10D62E201FA500A90A7C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 3ADC10BA2E201FA200A90A7C /* clipScope */;
+			target = 3ADC10BA2E201FA200A90A7C /* Magpie */;
 			targetProxy = 3ADC10D52E201FA500A90A7C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -545,7 +545,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3ADC10DE2E201FA500A90A7C /* Build configuration list for PBXNativeTarget "clipScope" */ = {
+		3ADC10DE2E201FA500A90A7C /* Build configuration list for PBXNativeTarget "Magpie" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3ADC10DF2E201FA500A90A7C /* Debug */,

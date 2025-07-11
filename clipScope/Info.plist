@@ -7,7 +7,7 @@
     <key>CFBundleName</key>
     <string>Magpie</string>
     <key>CFBundleIdentifier</key>
-    <string>samroman.clipScope</string>
+    <string>samroman.magpie</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundlePackageType</key>
@@ -16,6 +16,8 @@
     <string>1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
     <string>11.0</string>
     <key>NSPrincipalClass</key>
