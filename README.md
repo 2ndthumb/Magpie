@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/magpie.png" alt="Magpie Logo" width="200" height="200"/>
+</p>
+
 # Magpie
 
 Magpie is a modern, open-source clipboard manager for macOS, designed to help you organize, search, and manage your clipboard history with ease.
