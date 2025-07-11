@@ -1,1 +1,3 @@
 *.xcuserstate
+# Ignore DMG files
+Magpie.dmg
