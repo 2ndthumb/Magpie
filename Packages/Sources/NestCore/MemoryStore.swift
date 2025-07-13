@@ -1,10 +1,13 @@
 import Foundation
 import SQLite
 
-public final class MemoryStore {
+public final class MemoryStore: @unchecked Sendable {
     public static let shared = MemoryStore()
     private var db: Connection!
+    private let dbQueue = DispatchQueue(label: "NestCore.DB")
     private let memoryItems = Table("memory_items")
+    private var ftsAvailable = true
+    public var isFTSAvailable: Bool { ftsAvailable }
 
     private let id = Expression<String>("id")
     private let ts = Expression<Double>("ts")
@@ -16,12 +19,36 @@ public final class MemoryStore {
 
     private init() {
         let fm = FileManager.default
-        let folder = fm.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/Nest", isDirectory: true)
+#if os(iOS)
+        let base = fm.containerURL(forSecurityApplicationGroupIdentifier: "group.nest") ?? fm.urls(for: .documentDirectory, in: .userDomainMask)[0]
+#else
+        let base = fm.homeDirectoryForCurrentUser
+#endif
+        let folder = base.appendingPathComponent("Library/Application Support/Nest", isDirectory: true)
         try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
         let path = folder.appendingPathComponent("nest.db").path
-        db = try? Connection(path)
-        if let sql = initialMigrationSQL as String? {
-            try? db.run(sql)
+        dbQueue.sync {
+            do {
+                db = try Connection(path)
+                db.busyTimeout = 5.0
+                try db.execute("PRAGMA journal_mode=WAL;")
+                try db.execute(initialMigrationSQL)
+            } catch {
+                print("DB init error: \(error)")
+                ftsAvailable = false
+                let fallback = """
+                CREATE TABLE IF NOT EXISTS memory_items(
+                    id TEXT PRIMARY KEY,
+                    ts REAL NOT NULL,
+                    type TEXT NOT NULL,
+                    payload BLOB NOT NULL,
+                    embedding BLOB,
+                    tags TEXT,
+                    flags INTEGER DEFAULT 0
+                );
+                """
+                try? db.execute(fallback)
+            }
         }
     }
 
@@ -35,20 +62,61 @@ public final class MemoryStore {
             tags <- (try? JSONEncoder().encode(item.tags)).flatMap { String(data: $0, encoding: .utf8) },
             flags <- Int(item.flags)
         )
-        try db.run(insert)
+        var firstError: Error?
+        dbQueue.sync {
+            do { try db.run(insert) } catch { firstError = error }
+        }
+        if let err = firstError { throw err }
     }
 
     public func search(text: String, limit: Int = 50) throws -> [MemoryItem] {
         guard !text.isEmpty else { return [] }
-        let sql = "SELECT memory_items.* FROM memory_fts JOIN memory_items ON memory_fts.rowid = memory_items.rowid WHERE memory_fts MATCH ? LIMIT ?"
-        let stmt = try db.prepare(sql, text, limit)
-        return try stmt.map { row in try rowToItem(row) }
+        var result: Swift.Result<[MemoryItem], Error>!
+        dbQueue.sync {
+            do {
+                if ftsAvailable {
+                    let sql = "SELECT memory_items.* FROM memory_fts JOIN memory_items ON memory_fts.rowid = memory_items.rowid WHERE memory_fts MATCH ? LIMIT ?"
+                    var items: [MemoryItem] = []
+                    let iterator = try db.prepareRowIterator(sql, bindings: [text, limit])
+                    while let row = try iterator.failableNext() {
+                        items.append(try rowToItem(row))
+                    }
+                    result = .success(items)
+                } else {
+                    var items: [MemoryItem] = []
+                    for row in try db.prepare(memoryItems) {
+                        let item = try rowToItem(row)
+                        if let str = String(data: item.payload, encoding: .utf8), str.contains(text) {
+                            items.append(item)
+                        }
+                        if items.count >= limit { break }
+                    }
+                    result = .success(items)
+                }
+            } catch {
+                result = .failure(error)
+            }
+        }
+        return try result.get()
     }
 
     public func retrieveForPrompt(budget: Int) -> String {
-        let query = memoryItems.order(ts.desc).limit(budget)
-        let items = (try? db.prepare(query).compactMap { try rowToItem($0) }) ?? []
-        return items.map { String(data: $0.payload, encoding: .utf8) ?? "" }.joined(separator: "\n")
+        var result = ""
+        dbQueue.sync {
+            var totalTokens = 0
+            var pieces: [String] = []
+            if let rows = try? db.prepare(memoryItems.order(ts.desc)) {
+                for row in rows {
+                    guard let item = try? rowToItem(row), let string = String(data: item.payload, encoding: .utf8) else { continue }
+                    let tokens = string.count / 4
+                    if totalTokens + tokens > budget { break }
+                    totalTokens += tokens
+                    pieces.append(string)
+                }
+            }
+            result = pieces.joined(separator: "\n")
+        }
+        return result
     }
 
     private func rowToItem(_ row: Row) throws -> MemoryItem {

@@ -1,3 +1,5 @@
+import Foundation
+
 public struct MemoryItem: Identifiable, Codable {
     public enum PayloadType: String, Codable { case text, image, url, data }
     public let id: UUID
@@ -31,4 +33,14 @@ CREATE TABLE IF NOT EXISTS memory_items(
 );
 CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts
 USING fts5(content='memory_items', payload);
+CREATE TRIGGER IF NOT EXISTS memory_ai AFTER INSERT ON memory_items BEGIN
+    INSERT INTO memory_fts(rowid, payload) VALUES (new.rowid, new.payload);
+END;
+CREATE TRIGGER IF NOT EXISTS memory_ad AFTER DELETE ON memory_items BEGIN
+    INSERT INTO memory_fts(memory_fts, rowid, payload) VALUES('delete', old.rowid, old.payload);
+END;
+CREATE TRIGGER IF NOT EXISTS memory_au AFTER UPDATE ON memory_items BEGIN
+    INSERT INTO memory_fts(memory_fts, rowid, payload) VALUES('delete', old.rowid, old.payload);
+    INSERT INTO memory_fts(rowid, payload) VALUES (new.rowid, new.payload);
+END;
 """

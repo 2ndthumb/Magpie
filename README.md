@@ -13,6 +13,7 @@ Magpie is a modern, open-source clipboard manager for macOS, designed to help yo
 - Drag-and-drop support
 - Keyboard shortcuts
 - Privacy-first: all data stored locally
+- **Note:** The current alpha stores data in a plain SQLite database without encryption.
 
 ## Installation
 
