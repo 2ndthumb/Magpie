@@ -46,6 +46,9 @@ struct QuickMenuItem: View {
             )
             .cornerRadius(6)
             .contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                openPreview()
+            }
             .onTapGesture {
                 onTap()
                 if !combineMode {
@@ -207,6 +210,25 @@ struct QuickMenuItem: View {
             }
         }
         .frame(width: 32, height: 32)
+    }
+
+    private func openPreview() {
+        if item.type.contains("image"), let image = item.decodedImage {
+            openInImagePreview(image: image)
+        } else if item.type.contains("text"), let text = item.decodedText {
+            var editableText = text
+            openInTextEditor(text: .init(
+                get: { editableText },
+                set: { editableText = $0 }
+            )) {
+                ClipboardWatcher.shared.willCopyFromCombineOperation()
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.setString(editableText, forType: .string)
+            }
+        } else if let url = item.detectedURL {
+            LinkHelper.shared.openLink(url)
+        }
     }
     
     private func copyToPasteboard() {

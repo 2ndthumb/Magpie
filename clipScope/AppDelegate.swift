@@ -407,6 +407,9 @@ struct QuickGridItem: View {
             }
         }
         .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            openPreview()
+        }
         .onTapGesture {
             onTap()
             if !combineMode {
@@ -459,6 +462,25 @@ struct QuickGridItem: View {
         if item.type.contains("text") { return "doc.text" }
         if item.type.contains("image") { return "photo" }
         return "doc"
+    }
+
+    private func openPreview() {
+        if item.type.contains("image"), let data = Data(base64Encoded: item.base64Data), let image = NSImage(data: data) {
+            openInImagePreview(image: image)
+        } else if item.type.contains("text"), let data = Data(base64Encoded: item.base64Data), let string = String(data: data, encoding: .utf8) {
+            var editableText = string
+            openInTextEditor(text: .init(
+                get: { editableText },
+                set: { editableText = $0 }
+            )) {
+                ClipboardWatcher.shared.willCopyFromCombineOperation()
+                let pb = NSPasteboard.general
+                pb.clearContents()
+                pb.setString(editableText, forType: .string)
+            }
+        } else if let url = item.detectedURL {
+            LinkHelper.shared.openLink(url)
+        }
     }
     
     private func copyToPasteboard() {
