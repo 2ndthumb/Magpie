@@ -2,6 +2,9 @@ import SwiftUI
 import Combine
 import AVKit
 import AppKit
+#if NEST_CORE
+import NestCore
+#endif
 
 struct NestView: View {
     @StateObject private var clipStorage = ClipStorage.shared
@@ -30,7 +33,15 @@ struct NestView: View {
     }
 
     private func filterBySearch(_ items: [ClipItem]) -> [ClipItem] {
-        searchText.isEmpty ? items : items.filter { $0.matches(searchText) }
+        if searchText.isEmpty { return items }
+#if NEST_CORE
+        if let memResults = try? MemoryStore.shared.search(text: searchText) {
+            return memResults.map { mem in
+                ClipItem(id: mem.id, type: mem.type.rawValue, base64Data: mem.payload.base64EncodedString(), timestamp: mem.ts, applicationName: "", windowName: "")
+            }
+        }
+#endif
+        return items.filter { $0.matches(searchText) }
     }
     
     private func filterByType(_ items: [ClipItem], type: FilterType) -> [ClipItem] {
